@@ -2,129 +2,246 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>リセール販売履歴ビューア（クラウド・常時最新）</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>リセール販売履歴ビューア</title>
 <style>
-  :root{--bg:#f7f7f9;--card:#fff;--line:#e3e3e8;--txt:#222;--sub:#777;--accent:#2563eb}
+  :root{
+    --ink:#1d2433; --ink2:#5b6577; --line:#e4e2dc; --bg:#f5f4f1; --card:#ffffff;
+    --navy:#1f2a44; --gold:#a8843f;
+    --ab:#2f7d54; --bp:#c2902a; --b:#cf7a2c; --bm:#c2453b;
+    --z-blue:#2f6fb0; --z-green:#2f7d54; --z-red:#c2453b; --z-gray:#8a8f99;
+    --shadow:0 1px 2px rgba(20,25,40,.06),0 6px 18px rgba(20,25,40,.06);
+  }
   *{box-sizing:border-box}
-  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI","Hiragino Sans","Noto Sans JP",sans-serif;background:var(--bg);color:var(--txt);font-size:14px}
-  header{background:#111;color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:10}
-  header h1{font-size:16px;margin:0}
-  header .live{font-size:12px;background:#16a34a;padding:2px 8px;border-radius:10px}
-  main{max-width:1200px;margin:0 auto;padding:14px}
-  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
-  input,select{padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:14px;background:#fff}
-  button.go{padding:9px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px}
-  button.pg{padding:6px 12px;border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer}
-  button.pg:disabled{opacity:.4;cursor:default}
-  table{width:100%;border-collapse:collapse;background:var(--card);border-radius:10px;overflow:hidden}
-  th,td{padding:7px 9px;text-align:left;border-bottom:1px solid var(--line);font-size:13px}
-  th{background:#f0f0f3;font-weight:600}
-  tr:hover{background:#fafafe}
-  .rank{font-weight:700;padding:2px 8px;border-radius:6px;color:#fff;font-size:12px}
-  .r-A{background:#0891b2}.r-AB{background:#16a34a}.r-Bp{background:#d97706}.r-B{background:#dc2626}.r-Bm{background:#6b7280}
-  .price{font-weight:700;color:var(--accent)}
-  .muted{color:var(--sub)}
+  html,body{margin:0;padding:0}
+  body{font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased;font-feature-settings:"palt";line-height:1.5}
   .tnum{font-variant-numeric:tabular-nums}
-  .info{color:var(--sub);margin:6px 0}
-  .empty{color:var(--sub);padding:24px;text-align:center}
+  header{background:var(--navy);color:#fff;padding:18px 26px 16px}
+  header .brandline{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  header h1{font-size:19px;font-weight:800;letter-spacing:.04em;margin:0}
+  header .sub{font-size:12px;color:#aeb6c8;letter-spacing:.02em}
+  .controls{margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .search{flex:1;min-width:240px;position:relative}
+  .search input{width:100%;padding:11px 14px 11px 38px;border-radius:9px;border:1px solid #36405d;background:#11192e;color:#fff;font-size:14px;outline:none}
+  .search input::placeholder{color:#7c869c}
+  .search input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(168,132,63,.22)}
+  .search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.6}
+  select.sort{padding:10px 12px;border-radius:9px;border:1px solid #36405d;background:#11192e;color:#fff;font-size:13px;outline:none;cursor:pointer}
+  .wrap{display:flex;gap:0;align-items:flex-start}
+  aside{width:236px;flex:none;padding:20px 18px;border-right:1px solid var(--line);position:sticky;top:0;max-height:100vh;overflow:auto}
+  aside h2{font-size:11px;letter-spacing:.14em;color:var(--ink2);text-transform:uppercase;margin:18px 0 8px;font-weight:700}
+  aside h2:first-child{margin-top:0}
+  .facet{display:flex;flex-direction:column;gap:3px}
+  .facet label{display:flex;align-items:center;gap:8px;font-size:13px;padding:4px 6px;border-radius:6px;cursor:pointer;color:#33384a}
+  .facet label:hover{background:#ecece8}
+  .facet input{accent-color:var(--navy);width:15px;height:15px}
+  .facet .ct{margin-left:auto;font-size:11px;color:#9aa0ac}
+  .clearbtn{margin-top:14px;font-size:12px;color:var(--ink2);background:none;border:1px solid var(--line);border-radius:7px;padding:7px 10px;cursor:pointer;width:100%}
+  .clearbtn:hover{background:#fff}
+  main{flex:1;padding:18px 24px 60px;min-width:0}
+  .meta{font-size:12.5px;color:var(--ink2);margin:2px 0 16px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:13px;overflow:hidden;cursor:pointer;box-shadow:var(--shadow);transition:transform .12s ease,box-shadow .12s ease;display:flex;flex-direction:column}
+  .card:hover{transform:translateY(-3px);box-shadow:0 4px 10px rgba(20,25,40,.1),0 16px 32px rgba(20,25,40,.12)}
+  .thumb{position:relative;aspect-ratio:1/1;background:#eceae5;overflow:hidden}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .thumb .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#b3b0a8;font-size:13px}
+  .rankbadge{position:absolute;top:9px;left:9px;font-size:12px;font-weight:800;color:#fff;padding:3px 9px;border-radius:999px;letter-spacing:.03em}
+  .catbadge{position:absolute;top:9px;right:9px;font-size:11px;font-weight:700;color:#2c3242;background:rgba(255,255,255,.92);padding:3px 8px;border-radius:999px}
+  .photocount{position:absolute;bottom:9px;right:9px;font-size:11px;color:#fff;background:rgba(0,0,0,.6);padding:2px 7px;border-radius:6px}
+  .cbody{padding:11px 13px 13px;display:flex;flex-direction:column;gap:7px;flex:1}
+  .cbrand{font-size:11px;color:var(--ink2);letter-spacing:.02em}
+  .cname{font-size:13px;font-weight:700;line-height:1.36;color:#222838;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:35px}
+  .crow{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-top:2px}
+  .price{font-size:18px;font-weight:800}
+  .price small{font-size:11px;font-weight:600;color:var(--ink2)}
+  .bidbox{background:#f6f3ec;border:1px solid #ece3cf;border-radius:9px;padding:7px 10px;margin-top:1px}
+  .bidbox .lab{font-size:10.5px;color:#8a6f37;letter-spacing:.04em;font-weight:700}
+  .bidbox .val{font-size:17px;font-weight:800;color:#7a5d22}
+  .bidbox .val small{font-size:11px;font-weight:700;color:#a8843f}
+  .bidbox.hold{background:#f1f1f1;border-color:#e2e2e2}
+  .bidbox.hold .lab{color:#8b8f98}.bidbox.hold .val{color:#8b8f98;font-size:13px}
+  .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:1px}
+  .chip{font-size:11px;padding:2px 7px;border-radius:999px;background:#f0efeb;color:#4a5161}
+  .zone{font-size:11px;padding:2px 8px;border-radius:999px;color:#fff;font-weight:700}
+  .z-blue{background:var(--z-blue)}.z-green{background:var(--z-green)}.z-red{background:var(--z-red)}.z-gray{background:var(--z-gray)}
+  .empty{padding:60px 10px;text-align:center;color:var(--ink2)}
+  .overlay{position:fixed;inset:0;background:rgba(18,22,34,.55);display:none;align-items:flex-start;justify-content:center;z-index:50;padding:30px 16px;overflow:auto}
+  .overlay.on{display:flex}
+  .modal{background:#fff;border-radius:16px;max-width:920px;width:100%;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.3)}
+  .mtop{display:flex;gap:0;flex-wrap:wrap}
+  .gallery{width:420px;max-width:100%;flex:none;background:#0f1320;padding:14px;display:flex;flex-direction:column;gap:10px}
+  .gmain{aspect-ratio:1/1;background:#1b2030;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+  .gmain img{width:100%;height:100%;object-fit:contain}
+  .gthumbs{display:flex;gap:6px;flex-wrap:wrap}
+  .gthumbs img{width:48px;height:48px;object-fit:cover;border-radius:6px;border:2px solid transparent;cursor:pointer;opacity:.65;background:#222}
+  .gthumbs img.sel{border-color:var(--gold);opacity:1}
+  .mbody{flex:1;min-width:300px;padding:20px 22px;max-height:78vh;overflow:auto}
+  .mhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .mbrand{font-size:12px;color:var(--ink2)}
+  .mname{font-size:17px;font-weight:800;line-height:1.4;margin:2px 0 0}
+  .close{border:none;background:#eee;border-radius:8px;width:32px;height:32px;font-size:18px;cursor:pointer;flex:none;color:#444}
+  .close:hover{background:#e0e0e0}
+  .mbadges{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+  .seller-tag{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:#4a5161;background:#f0efeb;border-radius:999px;padding:3px 9px}
+  .bidgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:6px 0 14px}
+  .bidcell{border:1px solid var(--line);border-radius:11px;padding:11px 13px}
+  .bidcell.primary{background:#f7f3ea;border-color:#ece3cf}
+  .bidcell .t{font-size:11px;color:var(--ink2);font-weight:700;letter-spacing:.03em}
+  .bidcell .n{font-size:20px;font-weight:800;margin-top:3px}
+  .bidcell.primary .n{color:#7a5d22}
+  .bidcell .d{font-size:11.5px;color:var(--ink2);margin-top:3px}
+  .bidcell.hold .n{font-size:14px;color:#8b8f98}
+  table.spec{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px}
+  table.spec th{text-align:left;color:var(--ink2);font-weight:600;padding:7px 10px 7px 0;vertical-align:top;width:104px;white-space:nowrap}
+  table.spec td{padding:7px 0;vertical-align:top;border-bottom:1px solid #f0efec}
+  table.spec tr:last-child td{border-bottom:none}
+  .reason{background:#f7f7f4;border-left:3px solid var(--navy);border-radius:0 8px 8px 0;padding:9px 12px;font-size:12.5px;line-height:1.6;color:#3a4150;margin:4px 0}
+  .mlink{display:inline-block;margin-top:14px;font-size:13px;color:var(--navy);font-weight:700;text-decoration:none;border:1px solid var(--navy);border-radius:8px;padding:8px 14px}
+  .mlink:hover{background:var(--navy);color:#fff}
+  @media(max-width:780px){ aside{display:none} .gallery{width:100%} }
 </style>
 </head>
 <body>
 <header>
-  <h1>🛍 リセール販売履歴ビューア</h1>
-  <span class="live">● クラウド常時最新</span>
-</header>
-<main>
-  <div class="row">
-    <input id="q" placeholder="フリーワード（スペース区切りでAND検索：例 ジッピー モノグラム）" style="flex:1;min-width:240px">
-    <select id="fBrand"><option value="">全ブランド</option></select>
-    <select id="fCat"><option value="">全カテゴリ</option></select>
-    <select id="fRank"><option value="">全ランク</option><option>A</option><option>AB</option><option>B+</option><option>B</option><option>B-</option></select>
-    <select id="fSort">
-      <option value="sold_date.desc">売却日（新しい順）</option>
-      <option value="price.desc">価格（高い順）</option>
-      <option value="price.asc">価格（安い順）</option>
-      <option value="days.asc">販売日数（早い順）</option>
+  <div class="brandline">
+    <h1>リセール販売履歴ビューア</h1>
+    <span class="sub">クラウド常時最新 ／ 写真精査ランク・指値つき</span>
+  </div>
+  <div class="controls">
+    <div class="search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9aa3b5" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input id="q" type="text" placeholder="商品名・ブランド・素材・色・型番で検索（例: ジッピー / アンプラント / 青）" autocomplete="off">
+    </div>
+    <select class="sort" id="sort">
+      <option value="sold">売却日 新しい順</option>
+      <option value="days">経過日数 短い順</option>
+      <option value="price_desc">売価 高い順</option>
+      <option value="price_asc">売価 安い順</option>
+      <option value="likes">いいね 多い順</option>
     </select>
-    <button class="go" id="btn">検索</button>
   </div>
-  <div class="info" id="info">読み込み中…</div>
-  <div id="out"></div>
-  <div class="row" style="justify-content:center;margin-top:12px">
-    <button class="pg" id="prev">← 前へ</button>
-    <span id="pageinfo" class="muted"></span>
-    <button class="pg" id="next">次へ →</button>
-  </div>
-</main>
+</header>
+
+<div class="wrap">
+  <aside id="facets"></aside>
+  <main>
+    <div class="meta" id="count">Supabaseから読み込み中…</div>
+    <div class="grid" id="grid"></div>
+    <div id="scrollSentinel" style="height:1px"></div>
+    <div style="text-align:center"><button id="moreBtn" style="display:none;margin:16px auto;padding:10px 28px;font-size:15px;border-radius:8px;border:1px solid #ccc;background:#fff;cursor:pointer">もっと見る（残りを表示）</button></div>
+    <div class="empty" id="empty" style="display:none">該当する商品がありません。検索語やフィルターを見直してください。</div>
+  </main>
+</div>
+
+<div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
+
 <script>
 const SB="https://jhjhqzblvrvebdvaqqzx.supabase.co/rest/v1/items";
 const KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoamhxemJsdnJ2ZWJkdmFxcXp4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3MDUwMjksImV4cCI6MjA5NzI4MTAyOX0.LOOlmC2SaY42p-GMiBja3_wXTTbZfoD1UNKoOoyAqeU";
-const PER=100;
-let page=0, total=0;
-const yen=n=>"¥"+(n==null?"-":Number(n).toLocaleString());
-const rcls=r=>({"A":"r-A","AB":"r-AB","B+":"r-Bp","B":"r-B","B-":"r-Bm"}[r]||"r-Bm");
-const rbadge=r=>r?`<span class="rank ${rcls(r)}">${r}</span>`:"";
-const E=encodeURIComponent;
-const esc=s=>(s==null?"":String(s)).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const CONF = { rate:0.10, floor:12000, pack:100, unit:1000 };
+const fmt = n => "¥" + Math.round(n).toLocaleString("ja-JP");
+const floorUnit = (x,u) => Math.floor(x/u)*u;
+const photoUrl = (id,n) => `https://static.mercdn.net/item/detail/orig/photos/${id}_${n}.jpg`;
+const isBag = it => (it.category||"").indexOf("バッグ") !== -1;
+const isWatch = it => (it.category||"").indexOf("時計") !== -1;
+const isErmesSmall = it => it.brand==="エルメス" && !isBag(it) && !isWatch(it);
 
-function buildFilter(){
-  const parts=[];
-  const b=document.getElementById("fBrand").value, c=document.getElementById("fCat").value, rk=document.getElementById("fRank").value;
-  if(b) parts.push("brand=eq."+E(b));
-  if(c) parts.push("category=eq."+E(c));
-  if(rk) parts.push("rank=eq."+E(rk));
-  const q=document.getElementById("q").value.trim();
-  if(q){
-    const toks=q.split(/[\s　]+/).filter(Boolean);
-    const ands=toks.map(t=>`or(name.ilike.*${E(t)}*,model.ilike.*${E(t)}*,line.ilike.*${E(t)}*,material.ilike.*${E(t)}*,seller.ilike.*${E(t)}*)`);
-    parts.push("and=("+ands.join(",")+")");
+function calcBids(it){
+  if(isBag(it)||isWatch(it)) return null;
+  const recTarget = isErmesSmall(it) ? it.price*0.30 : Math.max(it.price*0.23, CONF.floor);
+  const bidFor = target => {
+    const cap = it.price - it.price*CONF.rate - it.shipping - CONF.pack - target;
+    const bid = floorUnit((cap - it.ecoFee)/1.1, CONF.unit);
+    const profit = it.price - it.price*CONF.rate - (bid*1.1 + it.ecoFee) - it.shipping - CONF.pack;
+    return { bid, profit, rate: profit/it.price };
+  };
+  return { rec: bidFor(recTarget), t23: bidFor(it.price*0.23), t30: bidFor(it.price*0.30),
+           targetPct: isErmesSmall(it) ? 30 : 23 };
+}
+function rankClass(r){ r=r||""; if(r.indexOf("AB")===0) return "var(--ab)"; if(r[0]==="A") return "var(--ab)"; if(r.indexOf("B+")===0) return "var(--bp)"; if(r.indexOf("B−")===0||r.indexOf("BC")===0||r.indexOf("B-")===0) return "var(--bm)"; if(r[0]==="B") return "var(--b)"; return "#777"; }
+function zone(it){ if(it.days<=2) return {l:"除外(経過短すぎ)",c:"z-gray"}; const half=it.days/2; if(it.likes>=it.days) return {l:"安すぎ(反応良すぎ)",c:"z-blue"}; if(it.likes>=half) return {l:"適正",c:"z-green"}; return {l:"高すぎ(反応薄)",c:"z-red"}; }
+
+const FACETS = [
+  {key:"seller", title:"出品者"},
+  {key:"brand", title:"ブランド"},
+  {key:"category", title:"カテゴリー"},
+  {key:"rank", title:"ランク", map:v=>(v||"").replace(/\(.*\)/,"")},
+];
+const state = { q:"", sort:"sold", filters:{} };
+FACETS.forEach(f=>state.filters[f.key]=new Set());
+let ITEMS = [];
+
+function facetValues(key,map){ const counts={}; ITEMS.forEach(it=>{ const v=(map?map(it[key]):it[key])||"(未設定)"; counts[v]=(counts[v]||0)+1; }); return Object.entries(counts).sort((a,b)=>b[1]-a[1]); }
+function buildFacets(){
+  const el=document.getElementById("facets"); let html="";
+  FACETS.forEach(f=>{ html+=`<h2>${f.title}</h2><div class="facet">`; facetValues(f.key,f.map).slice(0,60).forEach(([v,c])=>{ html+=`<label><input type="checkbox" data-k="${f.key}" value="${encodeURIComponent(v)}"><span>${v}</span><span class="ct">${c}</span></label>`; }); html+=`</div>`; });
+  html+=`<button class="clearbtn" id="clear">フィルターをクリア</button>`;
+  el.innerHTML=html;
+  el.querySelectorAll("input[type=checkbox]").forEach(cb=>{ cb.addEventListener("change",()=>{ const s=state.filters[cb.dataset.k]; const v=decodeURIComponent(cb.value); cb.checked?s.add(v):s.delete(v); render(); }); });
+  document.getElementById("clear").addEventListener("click",()=>{ FACETS.forEach(f=>state.filters[f.key].clear()); el.querySelectorAll("input[type=checkbox]").forEach(cb=>cb.checked=false); render(); });
+}
+function matches(it){
+  if(state.q){ const hay=[it.name,it.brand,it.line,it.model,it.material,it.color,it.seller].join(" ").toLowerCase(); const t=state.q.toLowerCase().split(/[\s　]+/).filter(Boolean); for(const x of t){ if(hay.indexOf(x)===-1) return false; } }
+  for(const f of FACETS){ const s=state.filters[f.key]; if(s.size){ const v=(f.map?f.map(it[f.key]):it[f.key])||"(未設定)"; if(!s.has(v)) return false; } }
+  return true;
+}
+function sortItems(arr){ const a=arr.slice(); const dnum=d=>{ const m=(d||"").match(/(\d{4})\/(\d{2})\/(\d{2})/); return m?(+m[1]*10000+ +m[2]*100+ +m[3]):0; };
+  if(state.sort==="sold") a.sort((x,y)=>dnum(y.soldDate)-dnum(x.soldDate));
+  if(state.sort==="days") a.sort((x,y)=>x.days-y.days);
+  if(state.sort==="price_desc") a.sort((x,y)=>y.price-x.price);
+  if(state.sort==="price_asc") a.sort((x,y)=>x.price-y.price);
+  if(state.sort==="likes") a.sort((x,y)=>y.likes-x.likes);
+  return a;
+}
+function card(it,idx){
+  const b=calcBids(it); const z=zone(it);
+  const bidHtml = b ? `<div class="bidbox"><div class="lab">推奨指値（エコリング）</div><div class="val tnum">${fmt(b.rec.bid)} <small>利${fmt(b.rec.profit)}・${(b.rec.rate*100).toFixed(0)}%</small></div></div>` : `<div class="bidbox hold"><div class="lab">指値</div><div class="val">バッグ/時計＝保留</div></div>`;
+  return `<div class="card" data-i="${idx}"><div class="thumb"><img src="${photoUrl(it.id,1)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="ph" style="display:none">${it.brand}</div><span class="rankbadge" style="background:${rankClass(it.rank)}">${it.rank}</span><span class="catbadge">${it.category}</span><span class="photocount">${it.photos}枚</span></div><div class="cbody"><div class="cbrand">${it.brand}・${it.color}</div><div class="cname">${it.name}</div><div class="crow"><div class="price tnum">${fmt(it.price)} <small>売却</small></div></div>${bidHtml}<div class="chips"><span class="zone ${z.c}">${z.l}</span><span class="chip">♥${it.likes}</span><span class="chip">${it.days}日</span></div></div></div>`;
+}
+let CUR=[]; let SHOWN=0; const PAGE=120;
+function render(){ CUR=sortItems(ITEMS.filter(matches)); SHOWN=0; document.getElementById("grid").innerHTML=""; document.getElementById("count").textContent=`${CUR.length}件 / 全${ITEMS.length}件`; document.getElementById("empty").style.display=CUR.length?"none":"block"; renderMore(); window.scrollTo(0,0); }
+function renderMore(){ const g=document.getElementById("grid"); const next=CUR.slice(SHOWN,SHOWN+PAGE); g.insertAdjacentHTML("beforeend", next.map((it,i)=>card(it,SHOWN+i)).join("")); SHOWN+=next.length; const mb=document.getElementById("moreBtn"); if(mb) mb.style.display=(SHOWN<CUR.length)?"inline-block":"none"; }
+function openModal(it){
+  const b=calcBids(it); const z=zone(it); const photos=[]; for(let n=1;n<=(it.photos||1);n++) photos.push(photoUrl(it.id,n));
+  const bidGrid = b ? `<div class="bidgrid"><div class="bidcell primary"><div class="t">推奨指値（目標利益率${b.targetPct}%）</div><div class="n tnum">${fmt(b.rec.bid)}</div><div class="d">利幅 ${fmt(b.rec.profit)}・利益率 ${(b.rec.rate*100).toFixed(1)}%</div></div><div class="bidcell"><div class="t">指値 23%</div><div class="n tnum">${fmt(b.t23.bid)}</div><div class="d">利幅 ${fmt(b.t23.profit)}・${(b.t23.rate*100).toFixed(1)}%</div></div><div class="bidcell"><div class="t">指値 30%</div><div class="n tnum">${fmt(b.t30.bid)}</div><div class="d">利幅 ${fmt(b.t30.profit)}・${(b.t30.rate*100).toFixed(1)}%</div></div></div><div class="reason" style="border-left-color:var(--gold)">指値はエコリング想定（入札×1.1＋固定手数料${fmt(it.ecoFee)}）。売価−メルカリ10%−送料${fmt(it.shipping)}−梱包¥100−目標利益で逆算し千円単位切り捨て。</div>` : `<div class="bidgrid"><div class="bidcell hold" style="grid-column:1/4"><div class="t">指値</div><div class="n">バッグ/時計＝保留</div></div></div>`;
+  const spec = [["ライン/素材",`${it.line||"—"} ／ ${it.material||"—"}`],["型番",it.model||"—"],["色",it.color||"—"],["売価",`<b class="tnum">${fmt(it.price)}</b>`],["いいね",`♥ ${it.likes}`],["出品日",it.listDate||"—"],["売却日",it.soldDate||"—"],["経過日数",`${it.days}日`],["適正判断",`<span class="zone ${z.c}">${z.l}</span>`]];
+  const reasonHtml = it.reason ? `<div class="reason"><b>ランク根拠（写真精査）</b><br>${it.reason}</div>` : "";
+  const m=document.getElementById("modal");
+  m.innerHTML=`<div class="mtop"><div class="gallery"><div class="gmain"><img id="gmain" src="${photos[0]}" onerror="this.style.opacity=.2"></div><div class="gthumbs">${photos.map((p,i)=>`<img src="${p}" class="${i===0?'sel':''}" data-p="${p}" onerror="this.style.display='none'">`).join("")}</div></div><div class="mbody"><div class="mhead"><div><div class="mbrand">${it.brand}・${it.category}</div><h3 class="mname">${it.name}</h3></div><button class="close" id="close">×</button></div><div class="mbadges"><span class="rankbadge" style="position:static;background:${rankClass(it.rank)}">ランク ${it.rank}</span><span class="seller-tag">出品者: ${it.seller}</span></div>${bidGrid}${reasonHtml}<table class="spec">${spec.map(([k,v])=>`<tr><th>${k}</th><td>${v}</td></tr>`).join("")}</table><a class="mlink" href="https://jp.mercari.com/item/${it.id}" target="_blank" rel="noopener">メルカリで商品を見る ↗</a></div></div>`;
+  document.getElementById("overlay").classList.add("on");
+  document.getElementById("close").onclick=closeModal;
+  m.querySelectorAll(".gthumbs img").forEach(t=>t.addEventListener("click",()=>{ document.getElementById("gmain").src=t.dataset.p; m.querySelectorAll(".gthumbs img").forEach(x=>x.classList.remove("sel")); t.classList.add("sel"); }));
+}
+function closeModal(){ document.getElementById("overlay").classList.remove("on"); }
+document.getElementById("overlay").addEventListener("click",e=>{ if(e.target.id==="overlay") closeModal(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeModal(); });
+document.getElementById("q").addEventListener("input",e=>{ state.q=e.target.value; render(); });
+document.getElementById("sort").addEventListener("change",e=>{ state.sort=e.target.value; render(); });
+document.getElementById("grid").addEventListener("click",e=>{ const c=e.target.closest(".card"); if(c) openModal(CUR[+c.dataset.i]); });
+(function(){ const s=document.getElementById("scrollSentinel"); if(s&&"IntersectionObserver" in window){ new IntersectionObserver(es=>{ if(es[0].isIntersecting && SHOWN<CUR.length) renderMore(); },{rootMargin:"600px"}).observe(s); } const mb=document.getElementById("moreBtn"); if(mb) mb.addEventListener("click",renderMore); })();
+
+function mapRow(r){
+  const d=s=>(s||"").replace(/-/g,"/");
+  return { id:r.item_id, seller:r.seller||"", sellerId:r.seller_id, name:r.name||"", brand:r.brand||"", category:r.category||"",
+    line:r.line||"", model:r.model||"", material:r.material||"", color:r.color||"",
+    price:+r.price||0, shipping:(r.shipping!=null?+r.shipping:(((r.category||"").indexOf("バッグ")!==-1)?1000:300)),
+    ecoFee:(r.eco_fee!=null?+r.eco_fee:((+r.price||0)<=50000?1100:2200)),
+    likes:+r.likes||0, listDate:d(r.list_date), soldDate:d(r.sold_date), days:+r.days||0, rank:r.rank||"", reason:r.reason||"", photos:+r.photos||1 };
+}
+async function loadAll(){
+  const cols="item_id,seller,seller_id,name,brand,category,line,model,material,color,price,shipping,eco_fee,likes,list_date,sold_date,days,rank,reason,photos";
+  let off=0; const lim=1000; const all=[];
+  while(true){
+    const r=await fetch(`${SB}?select=${cols}&order=sold_date.desc&limit=${lim}&offset=${off}`,{headers:{apikey:KEY,Authorization:"Bearer "+KEY}});
+    if(!r.ok){ document.getElementById("count").textContent="読み込みエラー: "+r.status; return; }
+    const rows=await r.json(); rows.forEach(x=>all.push(mapRow(x)));
+    document.getElementById("count").textContent=`読み込み中… ${all.length}件`;
+    if(rows.length<lim) break; off+=lim;
   }
-  return parts.join("&");
+  ITEMS=all; buildFacets(); render();
 }
-
-async function load(){
-  const out=document.getElementById("out"), info=document.getElementById("info");
-  out.innerHTML=`<div class="empty">読み込み中…</div>`;
-  const sort=document.getElementById("fSort").value;
-  const filt=buildFilter();
-  const url=`${SB}?select=sold_date,brand,category,name,model,line,material,color,rank,price,days,seller,photos&${filt?filt+"&":""}order=${sort}&limit=${PER}&offset=${page*PER}`;
-  try{
-    const r=await fetch(url,{headers:{apikey:KEY,Authorization:"Bearer "+KEY,Prefer:"count=exact"}});
-    if(!r.ok) throw new Error(r.status+" "+await r.text());
-    total=parseInt((r.headers.get("content-range")||"0/0").split("/")[1])||0;
-    const rows=await r.json();
-    info.textContent=`全 ${total.toLocaleString()} 件`;
-    if(!rows.length){ out.innerHTML=`<div class="empty">該当なし</div>`; updatePager(); return; }
-    let h=`<table><tr><th>売却日</th><th>ブランド</th><th>カテゴリ</th><th>商品名</th><th>型番</th><th>ライン</th><th>素材</th><th>色</th><th>ランク</th><th>価格</th><th>日数</th><th>出品者</th></tr>`;
-    for(const x of rows){
-      h+=`<tr><td class="muted tnum">${esc(x.sold_date)}</td><td>${esc(x.brand)}</td><td class="muted">${esc(x.category)}</td><td>${esc(x.name)}</td><td class="muted">${esc(x.model)}</td><td class="muted">${esc(x.line)}</td><td class="muted">${esc(x.material)}</td><td class="muted">${esc(x.color)}</td><td>${rbadge(x.rank)}</td><td class="price tnum">${yen(x.price)}</td><td class="tnum">${x.days}日</td><td class="muted">${esc(x.seller)}</td></tr>`;
-    }
-    h+=`</table>`; out.innerHTML=h;
-    updatePager();
-  }catch(e){ out.innerHTML=`<div class="empty">エラー: ${esc(e.message)}</div>`; }
-}
-function updatePager(){
-  const pages=Math.max(1,Math.ceil(total/PER));
-  document.getElementById("pageinfo").textContent=`${page+1} / ${pages} ページ`;
-  document.getElementById("prev").disabled=page<=0;
-  document.getElementById("next").disabled=page>=pages-1;
-}
-async function loadFacets(){
-  try{
-    const h={apikey:KEY,Authorization:"Bearer "+KEY};
-    const br=await (await fetch(`${SB}?select=brand`,{headers:h})).json();
-    const ca=await (await fetch(`${SB}?select=category`,{headers:h})).json();
-    [...new Set(br.map(x=>x.brand))].filter(Boolean).sort().forEach(b=>{const o=document.createElement("option");o.textContent=b;fBrand.appendChild(o);});
-    [...new Set(ca.map(x=>x.category))].filter(Boolean).sort().forEach(c=>{const o=document.createElement("option");o.textContent=c;fCat.appendChild(o);});
-  }catch(e){}
-}
-document.getElementById("btn").onclick=()=>{page=0;load();};
-document.getElementById("q").addEventListener("keydown",e=>{if(e.key==="Enter"){page=0;load();}});
-["fBrand","fCat","fRank","fSort"].forEach(id=>document.getElementById(id).addEventListener("change",()=>{page=0;load();}));
-document.getElementById("prev").onclick=()=>{if(page>0){page--;load();window.scrollTo(0,0);}};
-document.getElementById("next").onclick=()=>{page++;load();window.scrollTo(0,0);};
-loadFacets(); load();
+loadAll();
 </script>
 </body>
 </html>
