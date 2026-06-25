@@ -29,8 +29,11 @@
   select.sort{padding:10px 12px;border-radius:9px;border:1px solid #36405d;background:#11192e;color:#fff;font-size:13px;outline:none;cursor:pointer}
   .wrap{display:flex;gap:0;align-items:flex-start}
   aside{width:236px;flex:none;padding:20px 18px;border-right:1px solid var(--line);position:sticky;top:0;max-height:100vh;overflow:auto}
-  aside h2{font-size:11px;letter-spacing:.14em;color:var(--ink2);text-transform:uppercase;margin:18px 0 8px;font-weight:700}
+  aside h2{font-size:11px;letter-spacing:.14em;color:var(--ink2);text-transform:uppercase;margin:18px 0 8px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;user-select:none}
   aside h2:first-child{margin-top:0}
+  aside h2 .car{font-size:10px;transition:transform .15s;color:#9aa0ac}
+  aside h2.collapsed .car{transform:rotate(-90deg)}
+  .facet.hidden{display:none}
   .facet{display:flex;flex-direction:column;gap:3px}
   .facet label{display:flex;align-items:center;gap:8px;font-size:13px;padding:4px 6px;border-radius:6px;cursor:pointer;color:#33384a}
   .facet label:hover{background:#ecece8}
@@ -175,9 +178,10 @@ let ITEMS = [];
 function facetValues(key,map){ const counts={}; ITEMS.forEach(it=>{ const v=(map?map(it[key]):it[key])||"(未設定)"; counts[v]=(counts[v]||0)+1; }); return Object.entries(counts).sort((a,b)=>b[1]-a[1]); }
 function buildFacets(){
   const el=document.getElementById("facets"); let html="";
-  FACETS.forEach(f=>{ html+=`<h2>${f.title}</h2><div class="facet">`; facetValues(f.key,f.map).slice(0,60).forEach(([v,c])=>{ html+=`<label><input type="checkbox" data-k="${f.key}" value="${encodeURIComponent(v)}"><span>${v}</span><span class="ct">${c}</span></label>`; }); html+=`</div>`; });
+  FACETS.forEach(f=>{ const vals=facetValues(f.key,f.map); const collapsed=(f.key==="seller"); html+=`<h2 class="facet-h${collapsed?' collapsed':''}" data-k="${f.key}"><span class="car">▾</span>${f.title}<span class="ct" style="margin-left:auto">${vals.length}</span></h2><div class="facet${collapsed?' hidden':''}" data-fk="${f.key}">`; vals.slice(0,200).forEach(([v,c])=>{ html+=`<label><input type="checkbox" data-k="${f.key}" value="${encodeURIComponent(v)}"><span>${v}</span><span class="ct">${c}</span></label>`; }); html+=`</div>`; });
   html+=`<button class="clearbtn" id="clear">フィルターをクリア</button>`;
   el.innerHTML=html;
+  el.querySelectorAll("h2.facet-h").forEach(h=>{ h.addEventListener("click",()=>{ h.classList.toggle("collapsed"); const d=el.querySelector(`.facet[data-fk="${h.dataset.k}"]`); if(d) d.classList.toggle("hidden"); }); });
   el.querySelectorAll("input[type=checkbox]").forEach(cb=>{ cb.addEventListener("change",()=>{ const s=state.filters[cb.dataset.k]; const v=decodeURIComponent(cb.value); cb.checked?s.add(v):s.delete(v); render(); }); });
   document.getElementById("clear").addEventListener("click",()=>{ FACETS.forEach(f=>state.filters[f.key].clear()); el.querySelectorAll("input[type=checkbox]").forEach(cb=>cb.checked=false); render(); });
 }
