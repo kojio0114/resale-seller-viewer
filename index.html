@@ -34,6 +34,8 @@
   aside h2 .car{font-size:10px;transition:transform .15s;color:#9aa0ac}
   aside h2.collapsed .car{transform:rotate(-90deg)}
   .facet.hidden{display:none}
+  .ppz{font-size:11px;padding:4px 7px;border:1px solid var(--line);background:#fff;border-radius:6px;cursor:pointer;color:#4a5161}
+  .ppz:hover{background:#f0efeb}.ppz.on{background:var(--navy);color:#fff;border-color:var(--navy)}
   .facet{display:flex;flex-direction:column;gap:3px}
   .facet label{display:flex;align-items:center;gap:8px;font-size:13px;padding:4px 6px;border-radius:6px;cursor:pointer;color:#33384a}
   .facet label:hover{background:#ecece8}
@@ -171,21 +173,41 @@ const FACETS = [
   {key:"category", title:"カテゴリー"},
   {key:"rank", title:"ランク", map:v=>(v||"").replace(/\(.*\)/,"")},
 ];
-const state = { q:"", sort:"sold", filters:{} };
+const state = { q:"", sort:"sold", filters:{}, pmin:null, pmax:null };
 FACETS.forEach(f=>state.filters[f.key]=new Set());
 let ITEMS = [];
 
 function facetValues(key,map){ const counts={}; ITEMS.forEach(it=>{ const v=(map?map(it[key]):it[key])||"(未設定)"; counts[v]=(counts[v]||0)+1; }); return Object.entries(counts).sort((a,b)=>b[1]-a[1]); }
 function buildFacets(){
   const el=document.getElementById("facets"); let html="";
+  html+=`<h2 class="facet-h" data-k="price"><span class="car">▾</span>価格</h2><div class="facet" data-fk="price">
+    <div style="display:flex;gap:6px;align-items:center;margin:2px 0 6px">
+      <input id="pmin" type="number" placeholder="下限" style="width:50%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-size:12px">
+      <span style="color:#9aa0ac">〜</span>
+      <input id="pmax" type="number" placeholder="上限" style="width:50%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-size:12px">
+    </div>
+    <div id="ppreset" style="display:flex;flex-wrap:wrap;gap:4px">
+      <button class="ppz" data-min="" data-max="">全て</button>
+      <button class="ppz" data-min="30000" data-max="50000">3〜5万</button>
+      <button class="ppz" data-min="50000" data-max="100000">5〜10万</button>
+      <button class="ppz" data-min="100000" data-max="200000">10〜20万</button>
+      <button class="ppz" data-min="200000" data-max="">20万〜</button>
+    </div></div>`;
   FACETS.forEach(f=>{ const vals=facetValues(f.key,f.map); const collapsed=(f.key==="seller"); html+=`<h2 class="facet-h${collapsed?' collapsed':''}" data-k="${f.key}"><span class="car">▾</span>${f.title}<span class="ct" style="margin-left:auto">${vals.length}</span></h2><div class="facet${collapsed?' hidden':''}" data-fk="${f.key}">`; vals.slice(0,200).forEach(([v,c])=>{ html+=`<label><input type="checkbox" data-k="${f.key}" value="${encodeURIComponent(v)}"><span>${v}</span><span class="ct">${c}</span></label>`; }); html+=`</div>`; });
   html+=`<button class="clearbtn" id="clear">フィルターをクリア</button>`;
   el.innerHTML=html;
   el.querySelectorAll("h2.facet-h").forEach(h=>{ h.addEventListener("click",()=>{ h.classList.toggle("collapsed"); const d=el.querySelector(`.facet[data-fk="${h.dataset.k}"]`); if(d) d.classList.toggle("hidden"); }); });
   el.querySelectorAll("input[type=checkbox]").forEach(cb=>{ cb.addEventListener("change",()=>{ const s=state.filters[cb.dataset.k]; const v=decodeURIComponent(cb.value); cb.checked?s.add(v):s.delete(v); render(); }); });
-  document.getElementById("clear").addEventListener("click",()=>{ FACETS.forEach(f=>state.filters[f.key].clear()); el.querySelectorAll("input[type=checkbox]").forEach(cb=>cb.checked=false); render(); });
+  const pmin=el.querySelector("#pmin"), pmax=el.querySelector("#pmax");
+  const applyP=()=>{ state.pmin=pmin.value?+pmin.value:null; state.pmax=pmax.value?+pmax.value:null; el.querySelectorAll(".ppz").forEach(b=>b.classList.remove("on")); render(); };
+  pmin.value=state.pmin||""; pmax.value=state.pmax||"";
+  pmin.addEventListener("input",applyP); pmax.addEventListener("input",applyP);
+  el.querySelectorAll(".ppz").forEach(b=>b.addEventListener("click",()=>{ state.pmin=b.dataset.min?+b.dataset.min:null; state.pmax=b.dataset.max?+b.dataset.max:null; pmin.value=b.dataset.min; pmax.value=b.dataset.max; el.querySelectorAll(".ppz").forEach(x=>x.classList.remove("on")); b.classList.add("on"); render(); }));
+  document.getElementById("clear").addEventListener("click",()=>{ FACETS.forEach(f=>state.filters[f.key].clear()); el.querySelectorAll("input[type=checkbox]").forEach(cb=>cb.checked=false); state.pmin=null; state.pmax=null; if(pmin)pmin.value=""; if(pmax)pmax.value=""; el.querySelectorAll(".ppz").forEach(x=>x.classList.remove("on")); render(); });
 }
 function matches(it){
+  if(state.pmin!=null && it.price<state.pmin) return false;
+  if(state.pmax!=null && it.price>state.pmax) return false;
   if(state.q){ const hay=[it.name,it.brand,it.line,it.model,it.material,it.color,it.seller].join(" ").toLowerCase(); const t=state.q.toLowerCase().split(/[\s　]+/).filter(Boolean); for(const x of t){ if(hay.indexOf(x)===-1) return false; } }
   for(const f of FACETS){ const s=state.filters[f.key]; if(s.size){ const v=(f.map?f.map(it[f.key]):it[f.key])||"(未設定)"; if(!s.has(v)) return false; } }
   return true;
